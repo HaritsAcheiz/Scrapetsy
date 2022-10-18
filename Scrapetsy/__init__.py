@@ -48,6 +48,8 @@ class get_response:
         print('getting urls...')
         if self.pagination is False:
             user_agent=random.Random(500).choice(self.headers)
+            proxies = random.Random(500).choice(proxies)
+            proxies = f"{proxies['ip']}:{proxies['port']}"
             options = Options()
             options.add_argument(self.webdriver_opt['head'])
             options.add_argument(self.webdriver_opt['sandbox'])
@@ -68,28 +70,41 @@ class get_response:
             driver.quit()
             print(f'{len(hasil)} urls collected')
         else:
-            pass
-            # try:
-            #     user_agent = random.Random(500).choice(self.headers)
-            #     options = Options()
-            #     options.add_argument(self.webdriver_opt['head'])
-            #     options.add_argument(self.webdriver_opt['sandbox'])
-            #     options.add_argument(self.webdriver_opt['gpu'])
-            #     options.add_argument(self.webdriver_opt['translate'])
-            #     options.add_argument(f"user-agent={user_agent}")
-            #     options.add_argument('--proxy-server=%s' % proxies)
-            #     driver = webdriver.Firefox(executable_path=self.driver_path, options=options)
-            #     driver.get(url)
-            #     response = WebDriverWait(driver, 30).until(ec.presence_of_element_located((By.ID, 'content')))
-            #     parent = response.find_element(By.CSS_SELECTOR, ".wt-grid.wt-grid--block.wt-pl-xs-0")
-            #     child = parent.find_elements(By.CSS_SELECTOR, ".wt-list-unstyled")
-            #     hasil = []
-            #     for i in child:
-            #         item = i.find_element(By.TAG_NAME, "a").get_attribute('href')
-            #         print(f'{item} collected')
-            #         hasil.append(item)
-            #     driver.quit()
-            #     print(f'{len(hasil)} urls collected')
+            parsed_url = url.rsplit(sep='page=', maxsplit=1)
+            page = int(parsed_url[1])
+            url_wo_page = parsed_url[0]
+            hasil = []
+            while 1:
+                pag_url = f'{url_wo_page}page={str(page)}'
+                print(pag_url)
+                # try:
+                user_agent = random.Random(500).choice(self.headers)
+                proxies = random.Random(500).choice(proxies)
+                proxies = f"{proxies['ip']}:{proxies['port']}"
+                options = Options()
+                options.add_argument(self.webdriver_opt['head'])
+                options.add_argument(self.webdriver_opt['sandbox'])
+                options.add_argument(self.webdriver_opt['gpu'])
+                options.add_argument(self.webdriver_opt['translate'])
+                options.add_argument(f"user-agent={user_agent}")
+                options.add_argument('--proxy-server=%s' % proxies)
+                driver = webdriver.Firefox(executable_path=self.driver_path, options=options)
+                driver.get(pag_url)
+                response = WebDriverWait(driver, 30).until(ec.presence_of_element_located((By.ID, 'content')))
+                parent = response.find_element(By.CSS_SELECTOR, ".wt-grid.wt-grid--block.wt-pl-xs-0")
+                child = parent.find_elements(By.CSS_SELECTOR, ".wt-list-unstyled")
+                for i in child:
+                    item = i.find_element(By.TAG_NAME, "a").get_attribute('href')
+                    print(f'{item} collected')
+                    hasil.append(item)
+                print(f'page {str(page)} collected')
+                page += 1
+
+                driver.quit()
+                # except Exception:
+                #     driver.quit()
+                #     break
+            print(f'{len(hasil)} urls collected')
         return hasil
 
     def get_proxy(self, url):
@@ -98,11 +113,11 @@ class get_response:
             # Request keys and values from Geonode
             proxy_json_url = json.loads(requests.get(
                 url=url).text)
-            prox = random.choice(proxy_json_url['data'])
-            print(f"{prox['ip']}:{prox['port']} is used")
+            # prox = random.choice(proxy_json_url['data'])
+            # print(f"{prox['ip']}:{prox['port']} is used")
             ### Return random proxy
-            return f"{prox['ip']}:{prox['port']}"
-
+            # return f"{prox['ip']}:{prox['port']}"
+            return proxy_json_url['data']
         except requests.exceptions.ProxyError:
             ### Return '' string on error
             return ""
