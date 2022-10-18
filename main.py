@@ -6,3 +6,4 @@ if __name__ == '__main__':
                    pagination=False)
     proxies = se.get_proxy(url='https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc')
     response = se.get_url(url='https://www.etsy.com/search?q=gift+for+women&ref=pagination&anchor_listing_id=737271222&page=1', proxies=proxies)
+    print(response)
