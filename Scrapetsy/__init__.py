@@ -115,16 +115,14 @@ class get_response:
             print(f'{len(hasil)} urls collected')
         return hasil
 
-    def get_proxy(self, url):
+    def get_proxy(self, url='https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc'):
         print('getting proxy...')
         try:
             # Request keys and values from Geonode
             proxy_json_url = json.loads(requests.get(
                 url=url).text)
-            # prox = random.choice(proxy_json_url['data'])
-            # print(f"{prox['ip']}:{prox['port']} is used")
-            ### Return random proxy
-            # return f"{prox['ip']}:{prox['port']}"
+
+            # Return random proxy
             return proxy_json_url['data']
         except requests.exceptions.ProxyError:
             ### Return '' string on error
@@ -138,13 +136,15 @@ class get_response:
                 'detail': [], 'description': '', 'reviews': '', 'url': ''}
 
         user_agent = random.Random(500).choice(self.headers)
+        prox = random.Random(500).choice(proxies)
+        prox = f"{prox['ip']}:{prox['port']}"
         options = Options()
         options.add_argument(self.webdriver_opt['head'])
         options.add_argument(self.webdriver_opt['sandbox'])
         options.add_argument(self.webdriver_opt['gpu'])
         options.add_argument(self.webdriver_opt['translate'])
         options.add_argument(f"user-agent={user_agent}")
-        options.add_argument('--proxy-server=%s' % proxies)
+        options.add_argument('--proxy-server=%s' % prox)
         driver = webdriver.Firefox(executable_path=self.driver_path, options=options)
         driver.get(url)
         response = WebDriverWait(driver, 30).until(ec.presence_of_element_located((By.CSS_SELECTOR, 'div.body-wrap')))
@@ -161,7 +161,11 @@ class get_response:
 
         data['outlet_name'] = response.find_element(By.CSS_SELECTOR, 'p.wt-text-body-01.wt-mr-xs-1 > a > span').text
         data['link_outlet'] = response.find_element(By.CSS_SELECTOR, 'p.wt-text-body-01.wt-mr-xs-1 > a').get_attribute('href')
-        data['item_sold'] = response.find_element(By.CSS_SELECTOR, 'div.wt-display-inline-flex-xs.wt-align-items-center.wt-flex-wrap > span.wt-text-caption').text
+
+        try:
+            data['item_sold'] = response.find_element(By.CSS_SELECTOR, 'div.wt-display-inline-flex-xs.wt-align-items-center.wt-flex-wrap > span.wt-text-caption').text
+        except NoSuchElementException:
+            data['item_sold'] = '0'
 
         # get detail
         details = response.find_elements(By.CSS_SELECTOR, 'ul.wt-text-body-01 > li')
