@@ -10,6 +10,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 import random
 import json
 import requests
@@ -26,7 +27,7 @@ class get_response:
                  pagination=False,
                  webdriver_opt={'head': '--headless',
                                 'sandbox': '--no-sandbox',
-                                'gpu' :'--disable-gpu',
+                                'gpu': '--disable-gpu',
                                 'translate': '--disable-translate'}
                  ):
         self.headers = ['Mozilla/5.0 (Windows NT 6.2; rv:84.0.2) Gecko/20100101 Firefox/84.0.2 anonymized by Abelssoft 298666885',
@@ -64,9 +65,12 @@ class get_response:
             child = parent.find_elements(By.CSS_SELECTOR,".wt-list-unstyled")
             hasil=[]
             for i in child:
-                item=i.find_element(By.TAG_NAME, "a").get_attribute('href')
-                print(f'{item} collected')
-                hasil.append(item)
+                try:
+                    item=i.find_element(By.TAG_NAME, "a").get_attribute('href')
+                    print(f'{item} collected')
+                    hasil.append(item)
+                except StaleElementReferenceException:
+                    pass
             driver.quit()
             print(f'{len(hasil)} urls collected')
         else:
@@ -79,31 +83,35 @@ class get_response:
                 print(pag_url)
                 # try:
                 user_agent = random.Random(500).choice(self.headers)
-                proxies = random.Random(500).choice(proxies)
-                proxies = f"{proxies['ip']}:{proxies['port']}"
+                prox = random.Random(500).choice(proxies)
+                prox = f"{prox['ip']}:{prox['port']}"
                 options = Options()
                 options.add_argument(self.webdriver_opt['head'])
                 options.add_argument(self.webdriver_opt['sandbox'])
                 options.add_argument(self.webdriver_opt['gpu'])
                 options.add_argument(self.webdriver_opt['translate'])
                 options.add_argument(f"user-agent={user_agent}")
-                options.add_argument('--proxy-server=%s' % proxies)
+                options.add_argument('--proxy-server=%s' % prox)
                 driver = webdriver.Firefox(executable_path=self.driver_path, options=options)
                 driver.get(pag_url)
                 response = WebDriverWait(driver, 30).until(ec.presence_of_element_located((By.ID, 'content')))
-                parent = response.find_element(By.CSS_SELECTOR, ".wt-grid.wt-grid--block.wt-pl-xs-0")
-                child = parent.find_elements(By.CSS_SELECTOR, ".wt-list-unstyled")
-                for i in child:
-                    item = i.find_element(By.TAG_NAME, "a").get_attribute('href')
-                    print(f'{item} collected')
-                    hasil.append(item)
-                print(f'page {str(page)} collected')
-                page += 1
+                try:
+                    parent = response.find_element(By.CSS_SELECTOR, ".wt-grid.wt-grid--block.wt-pl-xs-0")
+                    child = parent.find_elements(By.CSS_SELECTOR, ".wt-list-unstyled")
+                    for i in child:
+                        try:
+                            item = i.find_element(By.TAG_NAME, "a").get_attribute('href')
+                            print(f'{item} collected')
+                            hasil.append(item)
+                        except StaleElementReferenceException:
+                            pass
+                    print(f'page {str(page)} collected')
+                    page += 1
 
-                driver.quit()
-                # except Exception:
-                #     driver.quit()
-                #     break
+                    driver.quit()
+                except NoSuchElementException:
+                    driver.quit()
+                    break
             print(f'{len(hasil)} urls collected')
         return hasil
 
