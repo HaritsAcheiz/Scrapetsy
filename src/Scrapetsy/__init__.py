@@ -19,7 +19,7 @@ import csv
 
 
 # Define Class Scrapetsy
-class get_response:
+class Scrapetsy:
 
     # define class variable
     def __init__(self,
@@ -213,3 +213,14 @@ class get_response:
         else:
             print('Unknown format file')
         print(f'{filepath} created')
+
+if __name__ == '__main__':
+    se = Scrapetsy(driver_path='C:/geckodriver-v0.31.0-win64/geckodriver.exe',
+                                pagination=True)
+    proxies = se.get_proxy()
+    urls = se.get_url(url='https://www.etsy.com/search?q=gift+for+women&ref=pagination&anchor_listing_id=737271222&page=250', proxies=proxies)
+    data = []
+    for url in urls:
+        data.append(se.get_detail(url, proxies = proxies))
+    print(f'{len(data)} collected')
+    se.create_file(data=data, filepath='C:/project/Scrapetsy/result/result.csv')
