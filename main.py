@@ -1,7 +1,7 @@
 from src import Scrapetsy
 
 if __name__ == '__main__':
-    se = Scrapetsy.get_response(driver_path='C:/geckodriver-v0.31.0-win64/geckodriver.exe',
+    se = Scrapetsy.Scrapetsy(driver_path='C:/geckodriver-v0.31.0-win64/geckodriver.exe',
                                 pagination=True)
     proxies = se.get_proxy()
     urls = se.get_url(url='https://www.etsy.com/search?q=gift+for+women&ref=pagination&anchor_listing_id=737271222&page=250', proxies=proxies)
